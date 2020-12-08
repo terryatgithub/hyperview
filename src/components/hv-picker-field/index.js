@@ -77,7 +77,8 @@ export default class HvPickerField extends PureComponent<
       'field-pressed',
     );
     const newElement = this.element.cloneNode(true);
-    newElement.setAttribute('field-pressed', !currentState);
+    const newState = (!currentState).toString();
+    newElement.setAttribute('field-pressed', newState);
     this.element = newElement;
   };
 
@@ -86,21 +87,22 @@ export default class HvPickerField extends PureComponent<
       this.element,
       'cancel-pressed',
     );
+    const newState = (!currentState).toString();
     const newElement = this.element.cloneNode(true);
-    newElement.setAttribute('cancel-pressed', !currentState);
+    newElement.setAttribute('cancel-pressed', newState);
     this.element = newElement;
   };
 
   toggleSavePress = () => {
     const currentState = this.getBooleanAttribute(this.element, 'done-pressed');
     const newElement = this.element.cloneNode(true);
-    newElement.setAttribute('done-pressed', !currentState);
+    const newState = (!currentState).toString();
+    newElement.setAttribute('done-pressed', newState);
     this.element = newElement;
   };
 
-  getBooleanAttribute = (element, attribute) => {
-    return this.element.getAttribute(attribute) === 'true';
-  };
+  getBooleanAttribute = (element: Element, attribute: DOMString) =>
+    this.element.getAttribute(attribute) === 'true';
 
   /**
    * Gets the label from the picker items for the given value.
