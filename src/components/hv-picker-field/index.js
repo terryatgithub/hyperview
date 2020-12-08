@@ -52,6 +52,7 @@ export default class HvPickerField extends PureComponent<
   static localNameAliases = [];
   props: HvComponentProps;
   state: State;
+  element: Element;
 
   constructor(props: HvComponentProps) {
     super(props);
@@ -91,13 +92,13 @@ export default class HvPickerField extends PureComponent<
   };
 
   toggleSavePress = () => {
-    const currentState = this.getBooleanAttribute('done-pressed');
+    const currentState = this.getBooleanAttribute(this.element, 'done-pressed');
     const newElement = this.element.cloneNode(true);
     newElement.setAttribute('done-pressed', !currentState);
     this.element = newElement;
   };
 
-  getBooleanAttribute = attribute => {
+  getBooleanAttribute = (element, attribute) => {
     return this.element.getAttribute(attribute) === 'true';
   };
 
@@ -211,7 +212,7 @@ export default class HvPickerField extends PureComponent<
       stylesheets,
       {
         ...options,
-        pressed: this.getBooleanAttribute('cancel-pressed'),
+        pressed: this.getBooleanAttribute(this.element, 'cancel-pressed'),
         styleAttr: 'modal-text-style',
       },
     );
@@ -220,7 +221,7 @@ export default class HvPickerField extends PureComponent<
       stylesheets,
       {
         ...options,
-        pressed: this.getBooleanAttribute('done-pressed'),
+        pressed: this.getBooleanAttribute(this.element, 'done-pressed'),
         styleAttr: 'modal-text-style',
       },
     );
@@ -309,7 +310,10 @@ export default class HvPickerField extends PureComponent<
     }
 
     const focused: boolean = this.state.focused;
-    const pressed: boolean = this.getBooleanAttribute('field-pressed');
+    const pressed: boolean = this.getBooleanAttribute(
+      this.element,
+      'field-pressed',
+    );
     const props = createProps(this.element, stylesheets, {
       ...options,
       focused,
