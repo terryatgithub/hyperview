@@ -55,20 +55,10 @@ export default class HvPickerField extends PureComponent<
 
   constructor(props: HvComponentProps) {
     super(props);
-    const element: Element = props.element;
-    const value: ?DOMString = element.getAttribute('value');
+    this.element = this.props.element.cloneNode(true);
     this.state = {
-      // on iOS, value is used to display the selected choice when
-      // the picker modal is hidden
-      value,
-      // on iOS, pickerValue is used to display the selected choice
-      // in the picker modal. On Android, the picker is shown in-line on the screen,
-      // so this value gets displayed.
-      pickerValue: value,
+      pickerValue: this.element.getAttribute('value'),
       focused: false,
-      fieldPressed: false,
-      donePressed: false,
-      cancelPressed: false,
     };
   }
 
@@ -81,15 +71,34 @@ export default class HvPickerField extends PureComponent<
   }
 
   toggleFieldPress = () => {
-    this.setState({ fieldPressed: !this.state.fieldPressed });
+    const currentState = this.getBooleanAttribute(
+      this.element,
+      'field-pressed',
+    );
+    const newElement = this.element.cloneNode(true);
+    newElement.setAttribute('field-pressed', !currentState);
+    this.element = newElement;
   };
 
   toggleCancelPress = () => {
-    this.setState({ cancelPressed: !this.state.cancelPressed });
+    const currentState = this.getBooleanAttribute(
+      this.element,
+      'cancel-pressed',
+    );
+    const newElement = this.element.cloneNode(true);
+    newElement.setAttribute('cancel-pressed', !currentState);
+    this.element = newElement;
   };
 
   toggleSavePress = () => {
-    this.setState({ donePressed: !this.state.donePressed });
+    const currentState = this.getBooleanAttribute('done-pressed');
+    const newElement = this.element.cloneNode(true);
+    newElement.setAttribute('done-pressed', !currentState);
+    this.element = newElement;
+  };
+
+  getBooleanAttribute = attribute => {
+    return this.element.getAttribute(attribute) === 'true';
   };
 
   /**
@@ -97,7 +106,7 @@ export default class HvPickerField extends PureComponent<
    * If the value doesn't have a picker item, returns null.
    */
   getLabelForValue = (value: DOMString): ?string => {
-    const element: Element = this.props.element;
+    const element: Element = this.element;
     const pickerItemElements: NodeList<Element> = element.getElementsByTagNameNS(
       Namespaces.HYPERVIEW,
       LOCAL_NAME.PICKER_ITEM,
@@ -122,7 +131,6 @@ export default class HvPickerField extends PureComponent<
    */
   onFieldPress = () => {
     this.setState({
-      pickerValue: this.state.value,
       focused: true,
     });
   };
@@ -140,12 +148,12 @@ export default class HvPickerField extends PureComponent<
    * Hides the picker and applies the chosen value to the field.
    */
   onModalDone = () => {
-    const element: Element = this.props.element;
+    const newElement: Element = this.element.cloneNode(true);
+    newElement.setAttribute('value', this.state.pickerValue || '');
+    this.element = newElement;
     this.setState({
       focused: false,
-      value: this.state.pickerValue,
     });
-    element.setAttribute('value', this.state.pickerValue || '');
   };
 
   /**
@@ -153,11 +161,10 @@ export default class HvPickerField extends PureComponent<
    * <picker-item> elements in the <picker-field> element.
    */
   renderPicker = (style: StyleSheetType<*>): ReactNode => {
-    const element: Element = this.props.element;
+    const element: Element = this.element;
     const props = {
       onValueChange: value => {
         this.setState({ pickerValue: value });
-        element.setAttribute('value', value || '');
       },
       selectedValue: this.state.pickerValue,
       style,
@@ -189,11 +196,10 @@ export default class HvPickerField extends PureComponent<
    * Uses styles defined on the <picker-field> element for the modal and buttons.
    */
   renderPickerModal = (): ReactNode => {
-    const element: Element = this.props.element;
     const stylesheets: StyleSheets = this.props.stylesheets;
     const options: HvComponentOptions = this.props.options;
     const modalStyle: Array<StyleSheetType<*>> = createStyleProp(
-      element,
+      this.element,
       stylesheets,
       {
         ...options,
@@ -201,26 +207,26 @@ export default class HvPickerField extends PureComponent<
       },
     );
     const cancelTextStyle: Array<StyleSheetType<*>> = createStyleProp(
-      element,
+      this.element,
       stylesheets,
       {
         ...options,
-        pressed: this.state.cancelPressed,
+        pressed: this.getBooleanAttribute('cancel-pressed'),
         styleAttr: 'modal-text-style',
       },
     );
     const doneTextStyle: Array<StyleSheetType<*>> = createStyleProp(
-      element,
+      this.element,
       stylesheets,
       {
         ...options,
-        pressed: this.state.donePressed,
+        pressed: this.getBooleanAttribute('done-pressed'),
         styleAttr: 'modal-text-style',
       },
     );
     const cancelLabel: string =
-      element.getAttribute('cancel-label') || 'Cancel';
-    const doneLabel: string = element.getAttribute('done-label') || 'Done';
+      this.element.getAttribute('cancel-label') || 'Cancel';
+    const doneLabel: string = this.element.getAttribute('done-label') || 'Done';
 
     return (
       <Modal
@@ -264,24 +270,27 @@ export default class HvPickerField extends PureComponent<
    * can cancel by hitting the back button or tapping outside of the modal.
    */
   renderAndroid = (): ReactNode => {
-    const element: Element = this.props.element;
     const stylesheets: StyleSheets = this.props.stylesheets;
     const options: HvComponentOptions = this.props.options;
     const fieldStyle: StyleSheetType<*> = createStyleProp(
-      element,
+      this.element,
       stylesheets,
       {
         ...options,
         styleAttr: 'field-style',
       },
     );
-    const textStyle: StyleSheetType<*> = createStyleProp(element, stylesheets, {
-      ...options,
-      styleAttr: 'field-text-style',
-    });
+    const textStyle: StyleSheetType<*> = createStyleProp(
+      this.element,
+      stylesheets,
+      {
+        ...options,
+        styleAttr: 'field-text-style',
+      },
+    );
     const viewProps = {
       style: fieldStyle,
-      ...createTestProps(element),
+      ...createTestProps(this.element),
     };
     const pickerComponent = this.renderPicker(textStyle);
     return <View {...viewProps}>{pickerComponent}</View>;
@@ -293,29 +302,28 @@ export default class HvPickerField extends PureComponent<
    * To cancel, the user must press the cancel button.
    */
   renderiOS = (): ReactNode => {
-    const element: Element = this.props.element;
     const stylesheets: StyleSheets = this.props.stylesheets;
     const options: HvComponentOptions = this.props.options;
-    if (element.getAttribute('hide') === 'true') {
+    if (this.element.getAttribute('hide') === 'true') {
       return null;
     }
 
     const focused: boolean = this.state.focused;
-    const pressed: boolean = this.state.fieldPressed;
-    const props = createProps(element, stylesheets, {
+    const pressed: boolean = this.getBooleanAttribute('field-pressed');
+    const props = createProps(this.element, stylesheets, {
       ...options,
       focused,
       pressed,
       styleAttr: 'field-style',
     });
-    const fieldTextStyle = createStyleProp(element, stylesheets, {
+    const fieldTextStyle = createStyleProp(this.element, stylesheets, {
       ...options,
       focused,
       pressed,
       styleAttr: 'field-text-style',
     });
-    const value: ?DOMString = element.getAttribute('value');
-    const placeholderTextColor: ?DOMString = element.getAttribute(
+    const value: ?DOMString = this.element.getAttribute('value');
+    const placeholderTextColor: ?DOMString = this.element.getAttribute(
       'placeholderTextColor',
     );
     if (!value && placeholderTextColor) {
@@ -324,7 +332,7 @@ export default class HvPickerField extends PureComponent<
 
     const label: string = value
       ? this.getLabelForValue(value) || value
-      : element.getAttribute('placeholder') || '';
+      : this.element.getAttribute('placeholder') || '';
 
     return (
       <TouchableWithoutFeedback
