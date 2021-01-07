@@ -63,12 +63,19 @@ export default class HvPickerField extends PureComponent<
     };
   }
 
-  static getDerivedStateFromProps(
-    nextProps: HvComponentProps,
-    prevState: State,
-  ) {
-    const value = nextProps.element.getAttribute('value') || '';
-    return value !== prevState.value ? { value } : {};
+  componentDidUpdate(prevProps: HvComponentProps, prevState: State) {
+    // Typical usage (don't forget to compare props):
+    const valueFromProps = this.props.element.getAttribute('value');
+    if (
+      prevState.pickerValue === this.state.pickerValue &&
+      prevState.focused === this.state.focused &&
+      this.state.pickerValue !== valueFromProps
+    ) {
+      this.element = this.props.element.cloneNode(true);
+      this.setState({
+        pickerValue: this.element.getAttribute('value'),
+      });
+    }
   }
 
   toggleFieldPress = () => {
